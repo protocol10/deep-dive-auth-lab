@@ -1,11 +1,10 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"github/com/protocol10/deep-dive-auth-lab/auth/models"
+	"github/com/protocol10/deep-dive-auth-lab/auth/repository"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,29 +14,30 @@ type AuthService interface {
 }
 
 type Service struct {
-	db  *pgxpool.Pool
-	ctx context.Context
+	repo repository.UserRepository
 }
 
-func NewAuthService(db *pgxpool.Pool, ctx context.Context) *Service {
+const (
+	UserAlreadyExistsError = "user already exists"
+)
+
+func NewAuthService(repo repository.UserRepository) *Service {
 	return &Service{
-		db:  db,
-		ctx: ctx,
+		repo: repo,
 	}
 }
 
 func (s *Service) RegisterUser(req models.UserRegisterRequest) error {
-	var exists bool
 
 	// 1. Check if the user exists
-	err := s.db.QueryRow(s.ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", req.EmailID).Scan(&exists)
+	exists, err := s.repo.ExistsByEmail(req.EmailID)
 	if err != nil {
 		return err
 	}
 
 	// 2. Return an error if they do
 	if exists {
-		return errors.New("user already exists")
+		return errors.New(UserAlreadyExistsError)
 	}
 
 	// 3. Insert the new user if they don't
@@ -45,8 +45,10 @@ func (s *Service) RegisterUser(req models.UserRegisterRequest) error {
 	if err != nil {
 		return err
 	}
-
-	_, err = s.db.Exec(s.ctx, "INSERT INTO users (email, password_hash) VALUES ($1, $2)", req.EmailID, passwordHash)
+	err = s.repo.CreateUser(models.User{
+		Email:        req.EmailID,
+		PasswordHash: string(passwordHash),
+	})
 	return err
 }
 
