@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github/com/protocol10/deep-dive-auth-lab/auth"
+	"github/com/protocol10/deep-dive-auth-lab/auth/repository"
 	"github/com/protocol10/deep-dive-auth-lab/auth/service"
 	"github/com/protocol10/deep-dive-auth-lab/server"
 
@@ -24,7 +25,8 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Database connected successfully")
-	authService := service.NewAuthService(pgxPool, ctx)
+	repo := repository.NewRepository(pgxPool, ctx)
+	authService := service.NewAuthService(repo)
 	authHandler := auth.NewHandler(authService)
 	server.InitializeRouters(authHandler)
 }

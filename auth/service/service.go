@@ -10,7 +10,7 @@ import (
 
 type AuthService interface {
 	RegisterUser(req models.UserRegisterRequest) error
-	LoginUser(email, password string) error // Change it later
+	LoginUser(req models.UserLoginRequest) error // Change it later
 }
 
 type Service struct {
@@ -52,6 +52,18 @@ func (s *Service) RegisterUser(req models.UserRegisterRequest) error {
 	return err
 }
 
-func (s *Service) LoginUser(email, password string) error {
+func (s *Service) LoginUser(req models.UserLoginRequest) error {
+	// 1. Check if the user exists
+	user, err := s.repo.GetUserByEmail(req.EmailID)
+	if err != nil {
+		return err
+	}
+
+	// 2. Verify the password
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return errors.New("invalid credentials")
+	}
+
 	return nil
 }

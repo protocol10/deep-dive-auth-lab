@@ -8,9 +8,14 @@ import (
 )
 
 type UserRepository interface {
+	// Regisrtation
 	CreateUser(user models.User) error
+
+	// User Checks if exist or not for registration and login or get user information
 	GetUserByEmail(email string) (models.User, error)
 	ExistsByEmail(email string) (bool, error)
+
+	Login(email, password string) (models.User, error)
 }
 
 type Repository struct {
@@ -41,4 +46,11 @@ func (r *Repository) ExistsByEmail(email string) (bool, error) {
 	var exists bool
 	err := r.db.QueryRow(r.ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
 	return exists, err
+}
+
+func (r *Repository) Login(email, password string) (models.User, error) {
+	var user models.User
+	err := r.db.QueryRow(r.ctx, "SELECT id, email, password_hash FROM users WHERE email = $1 and password_hash = $2", email, password).
+		Scan(&user.ID, &user.Email, &user.PasswordHash)
+	return user, err
 }

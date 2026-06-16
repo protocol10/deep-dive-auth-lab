@@ -14,6 +14,10 @@ type UserRegisterRequest struct {
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirm_password"`
 }
+type UserLoginRequest struct {
+	EmailID  string `json:"email"`
+	Password string `json:"password"`
+}
 
 func (req *UserRegisterRequest) Validate() error {
 	if req.Password != req.ConfirmPassword {
