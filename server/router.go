@@ -7,9 +7,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func InitializeRouters() {
+func InitializeRouters(authHandler *auth.Handler) {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/register", auth.RegisterHandler).Methods("POST")
+	r.HandleFunc("/api/v1/register", authHandler.RegisterHandler).Methods("POST")
 
 	err := http.ListenAndServe(":8080", r)
 	if err != nil {
